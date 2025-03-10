@@ -28,6 +28,16 @@ const enemyTypes = {
         defense: 3,
         speed: 30,
         sightRange: 8
+    },
+    // 新しい敵タイプを追加
+    boss_ogre: {
+        name: "オーガ",
+        display: '👹',
+        hp: 200,
+        attack: 20,
+        defense: 10,
+        speed: 40,
+        sightRange: 10
     }
 };
 
@@ -40,6 +50,7 @@ let playerLevel = 1;
 let playerExperience = 0;
 const experienceToLevelUp = 100; // レベルアップに必要な経験値
 let equippedWeapon = null;
+let equippedArmor = null;
 let inventory = [];
 let isFighting = false;
 let gameLoopInterval;
@@ -59,41 +70,61 @@ const items = {
         type: "potion",
         healAmount: 30,
         display: '🧪'
+    },
+    bomb: {
+        name: "爆弾",
+        type: "consumable",
+        display: '💣',
+        damage: 50
+    },
+    armor_leather: {
+        name: "革の鎧",
+        type: "armor",
+        defenseBonus: 3,
+        display: '🛡️'
     }
 };
 
 let itemPositions = [
     { x: 5, y: 5, type: 'weapon_sword' },
-    { x: 15, y: 10, type: 'potion_heal' }
+    { x: 15, y: 10, type: 'potion_heal' },
+    { x: 8, y: 12, type: 'bomb' },
+    { x: 12, y: 5, type: 'armor_leather' }
 ];
 
 function generateDungeon() {
     dungeonMap = [];
     enemies = [];
 
+    // 壁で初期化
     for (let y = 0; y < dungeonHeight; y++) {
         dungeonMap[y] = [];
         for (let x = 0; x < dungeonWidth; x++) {
-            if (x === 0 || x === dungeonWidth - 1 || y === 0 || y === dungeonHeight - 1 || (Math.random() < 0.2 && (x % 2 !== 0 || y % 2 !== 0))) {
-                dungeonMap[y][x] = '#';
-            } else {
-                dungeonMap[y][x] = '.';
-            }
+            dungeonMap[y][x] = '#';
         }
     }
-    itemPositions.forEach(itemPos => {
-        if (dungeonMap[itemPos.y][itemPos.x] === '.') {
-            dungeonMap[itemPos.y][itemPos.x] = itemPos.type;
-        }
-    });
+
+    // 部屋を生成
+    const roomCount = 4; // 部屋数
+    for (let i = 0; i < roomCount; i++) {
+        createRoom();
+    }
+
+    // 通路を生成（簡単な方法：部屋同士を繋ぐ）
+    connectRooms();
+
+    // プレイヤーの初期位置
+    playerPosition = findValidSpawnPoint();
     dungeonMap[playerPosition.y][playerPosition.x] = '.';
 
-    for (let i = 0; i < 5; i++) {
-        let enemyTypeKeys = Object.keys(enemyTypes);
+    // 敵を配置
+    let enemyCount = 5;
+
+    for (let i = 0; i < enemyCount; i++) {
+        let enemyTypeKeys = Object.keys(enemyTypes).filter(key => key !== 'boss_ogre'); // オーガ以外の敵を選択
         let randomEnemyTypeKey = enemyTypeKeys[Math.floor(Math.random() * enemyTypeKeys.length)];
         let enemyType = enemyTypes[randomEnemyTypeKey];
-
-        let enemy = createEnemy(enemyType);
+        let enemy = createEnemy(enemyType, playerLevel);
 
         let spawnPoint = getRandomFloorPosition();
         enemy.x = spawnPoint.x;
@@ -102,12 +133,76 @@ function generateDungeon() {
         dungeonMap[enemy.y][enemy.x] = 'E';
     }
 
+    // アイテムを配置
+    itemPositions.forEach(itemPos => {
+        if (dungeonMap[itemPos.y][itemPos.x] === '.') {
+            dungeonMap[itemPos.y][itemPos.x] = itemPos.type;
+        }
+    });
 
     itemPositions.forEach(itemPos => {
         if (dungeonMap[itemPos.y][itemPos.x] !== itemPos.type) {
-            dungeonMap[itemPos.y][itemPos.x] = '.';
+            dungeonMap[itemPos.y][itemPos.y] = '.';
         }
     });
+}
+
+function createRoom() {
+    const roomWidth = Math.floor(Math.random() * 6) + 4; // 4-9
+    const roomHeight = Math.floor(Math.random() * 6) + 4; // 4-9
+    const roomX = Math.floor(Math.random() * (dungeonWidth - roomWidth - 1)) + 1;
+    const roomY = Math.floor(Math.random() * (dungeonHeight - roomHeight - 1)) + 1;
+
+    for (let y = roomY; y < roomY + roomHeight; y++) {
+        for (let x = roomX; x < roomX + roomWidth; x++) {
+            dungeonMap[y][x] = '.';
+        }
+    }
+}
+
+function connectRooms() {
+    // 簡単な接続：すべての部屋の中心点を計算し、それらを直線で繋ぐ
+    const roomCenters = [];
+    for (let y = 0; y < dungeonHeight; y++) {
+        for (let x = 0; x < dungeonWidth; x++) {
+            if (dungeonMap[y][x] === '.') {
+                // 部屋の中心を探す（かなり大雑把）
+                let roomX = x, roomY = y;
+                while (x < dungeonWidth && dungeonMap[y][x] === '.') x++;
+                while (y < dungeonHeight && dungeonMap[y][x] === '.') y++;
+                roomCenters.push({ x: Math.floor((x + roomX) / 2), y: Math.floor((y+roomY) / 2) });
+            }
+        }
+    }
+
+    // 最初の部屋から順番に繋ぐ
+    for (let i = 0; i < roomCenters.length - 1; i++) {
+        connectTwoPoints(roomCenters[i], roomCenters[i + 1]);
+    }
+}
+
+function connectTwoPoints(start, end) {
+    let x = start.x, y = start.y;
+    while (x !== end.x) {
+        dungeonMap[y][x] = '.';
+        x += (end.x > x) ? 1 : -1;
+    }
+    while (y !== end.y) {
+        dungeonMap[y][x] = '.';
+        y += (end.y > y) ? 1 : -1;
+    }
+    dungeonMap[y][x] = '.'; // 最後の点
+}
+
+function findValidSpawnPoint() {
+    let x, y;
+    while (true) {
+        x = Math.floor(Math.random() * dungeonWidth);
+        y = Math.floor(Math.random() * dungeonHeight);
+        if (dungeonMap[y][x] === '.') {
+            return { x, y };
+        }
+    }
 }
 
 function getRandomFloorPosition() {
@@ -121,16 +216,35 @@ function getRandomFloorPosition() {
     }
 }
 
+function createEnemy(enemyType, playerLevel) {
+    // プレイヤーのレベルに応じて敵のステータスを調整
+    let hp = enemyType.hp;
+    let attack = enemyType.attack;
+    let defense = enemyType.defense;
 
-function createEnemy(enemyType) {
+    if (enemyType === enemyTypes.boss_ogre) {
+        // オーガのステータスをプレイヤーレベルを5で割った数倍にする
+        let ogreModifier = Math.max(1, Math.floor(playerLevel / 5)); // 最低でも1倍
+
+        hp = Math.floor(enemyType.hp * ogreModifier);
+        attack = Math.floor(enemyType.attack * ogreModifier);
+        defense = Math.floor(enemyType.defense * ogreModifier);
+    } else {
+        // 他の敵は攻撃力と防御力が少しだけ上昇
+        let levelModifier = playerLevel * 0.1; // 1レベルあたり10%上昇
+
+        attack = Math.floor(enemyType.attack * (1 + levelModifier));
+        defense = Math.floor(enemyType.defense * (1 + levelModifier));
+    }
+
     return {
         type: enemyType,
         name: enemyType.name,
         display: enemyType.display,
-        hp: enemyType.hp,
-        maxHp: enemyType.hp,
-        attack: enemyType.attack,
-        defense: enemyType.defense,
+        hp: hp,
+        maxHp: hp,
+        attack: attack,
+        defense: defense,
         speed: enemyType.speed,
         sightRange: enemyType.sightRange,
         x: 0,
@@ -170,6 +284,8 @@ function createDungeonCell(x, y) {
         case '.': cell.classList.add('floor'); break;
         case 'weapon_sword': cell.classList.add('item-weapon'); break;
         case 'potion_heal': cell.classList.add('item-potion'); break;
+        case 'bomb': cell.classList.add('item-bomb'); break;
+        case 'armor_leather': cell.classList.add('item-armor'); break;
         default: cell.classList.add('floor'); break;
     }
 
@@ -193,7 +309,7 @@ function movePlayer(dx, dy) {
 
         const cellType = dungeonMap[playerPosition.y][playerPosition.x];
 
-        if (cellType === 'weapon_sword' || cellType === 'potion_heal') {
+        if (cellType === 'weapon_sword' || cellType === 'potion_heal' || cellType === 'bomb' || cellType === 'armor_leather') {
             getItem(cellType);
             dungeonMap[playerPosition.y][playerPosition.x] = '.';
             drawDungeon();
@@ -205,6 +321,13 @@ function movePlayer(dx, dy) {
         } else {
             drawDungeon();
         }
+    }
+
+     // 敵が全滅しているかチェック
+     if (enemies.length === 0) {
+        displayMessage("ダンジョンクリア！次の階層へ！");
+        generateDungeon(); // 新しいダンジョンを生成
+        drawDungeon();
     }
 }
 
@@ -282,7 +405,15 @@ function updateInventoryUI() {
     const inventoryItemsList = document.getElementById('inventory-items');
     if (!inventoryItemsList) return;
     inventoryItemsList.innerHTML = '';
-    inventory.forEach(item => {
+
+    // インベントリをフィルタリングして、装備中のアイテムを除外
+    const filteredInventory = inventory.filter(item => {
+        if (item.type === 'weapon' && equippedWeapon === item) return false;
+        if (item.type === 'armor' && equippedArmor === item) return false;
+        return true;
+    });
+
+    filteredInventory.forEach(item => {
         const listItem = document.createElement('li');
         listItem.textContent = `${item.name} (${item.display})`;
         listItem.addEventListener('click', () => {
@@ -301,6 +432,10 @@ function useItem(item) {
         displayMessage(`${item.name} を使って HP が ${item.healAmount} 回復した！`);
     } else if (item.type === 'weapon') {
         equipWeapon(item);
+    } else if (item.type === 'consumable') {
+        useConsumable(item);
+    } else if (item.type === 'armor') {
+        equipArmor(item);
     }
 }
 
@@ -315,6 +450,66 @@ function equipWeapon(weapon) {
     displayMessage(`${weapon.name} を装備した！ 攻撃力 +${weapon.attackBonus}`);
 }
 
+function equipArmor(armor) {
+  if (equippedArmor) {
+    playerDefense -= equippedArmor.defenseBonus;
+  }
+  equippedArmor = armor;
+  playerDefense += equippedArmor.defenseBonus;
+  updateHpDisplay();
+  updateInventoryUI();
+  displayMessage(`${armor.name} を装備した！ 防御力 +${armor.defenseBonus}`);
+}
+
+function useConsumable(item) {
+    if (item.name === "爆弾") { // アイテムの種類で条件分岐
+        // 爆弾を使用
+        displayMessage("爆弾を使った！");
+
+        // 爆弾の効果範囲（例：周囲1マス）
+        for (let dx = -1; dx <= 1; dx++) {
+            for (let dy = -1; dy <= 1; dy++) {
+                const targetX = playerPosition.x + dx;
+                const targetY = playerPosition.y + dy;
+
+                // ダンジョン範囲内か確認
+                if (targetX >= 0 && targetX < dungeonWidth && targetY >= 0 && targetY < dungeonHeight) {
+                    // 敵がいるか確認
+                    const enemy = enemies.find(e => e.x === targetX && e.y === targetY);
+                    if (enemy) {
+                        // 敵にダメージ
+                        const damage = item.damage;
+                        enemy.hp -= damage;
+                        displayMessage(`${enemy.name} に ${damage} ダメージ！`, 'critical');
+
+                        // 敵が死亡した場合
+                        if (enemy.hp <= 0) {
+                            displayMessage(`${enemy.name} を倒した！`);
+                            dungeonMap[enemy.y][enemy.x] = '.';
+                            enemies = enemies.filter(e => e !== enemy);
+                            gainExperience(enemy);
+                        }
+                    }
+                    // 壁を破壊
+                    if (dungeonMap[targetY][targetX] === '#') {
+                        dungeonMap[targetY][targetX] = '.';
+                        displayMessage(`壁を破壊した！`);
+                    }
+                }
+            }
+        }
+        drawDungeon();
+        removeItemFromInventory(item);
+        updateHpDisplay();
+
+         // 敵が全滅しているかチェック
+        if (enemies.length === 0) {
+            displayMessage("ダンジョンクリア！次の階層へ！");
+            generateDungeon(); // 新しいダンジョンを生成
+            drawDungeon();
+        }
+    }
+}
 
 function removeItemFromInventory(itemToRemove) {
     inventory = inventory.filter(item => item !== itemToRemove);
@@ -380,6 +575,13 @@ function startBattle(enemy) {
             gainExperience(enemy);
 
             updateHpDisplay();
+
+             // 敵が全滅しているかチェック
+             if (enemies.length === 0) {
+                displayMessage("ダンジョンクリア！次の階層へ！");
+                generateDungeon(); // 新しいダンジョンを生成
+                drawDungeon();
+            }
             isFighting = false;
             return;
         }
@@ -421,6 +623,9 @@ function gainExperience(enemy) {
         case enemyTypes.goblin:
             experienceGain = 50;
             break;
+        case enemyTypes.boss_ogre:
+            experienceGain = 100;
+            break;
         default:
             experienceGain = 30; // デフォルトの経験値
             break;
@@ -436,6 +641,7 @@ function gainExperience(enemy) {
 }
 
 function levelUp() {
+    let prevLevel = playerLevel;
     playerLevel++;
     playerExperience -= experienceToLevelUp;
 
@@ -445,6 +651,28 @@ function levelUp() {
     playerDefense += 1;
 
     displayMessage(`レベルアップ！ 現在レベル: ${playerLevel}`);
+
+    // 5の倍数のレベルの時だけオーガを出現させる
+    if (playerLevel % 5 === 0 && playerLevel != prevLevel) {
+      spawnOgre();
+    }
+
+    if (enemies.length === 0) {
+        displayMessage("ダンジョンクリア！次の階層へ！");
+        generateDungeon(); // 新しいダンジョンを生成
+        drawDungeon();
+    }
+}
+
+function spawnOgre() {
+    let ogre = createEnemy(enemyTypes.boss_ogre, playerLevel);
+    let spawnPoint = getRandomFloorPosition();
+    ogre.x = spawnPoint.x;
+    ogre.y = spawnPoint.y;
+    enemies.push(ogre);
+    dungeonMap[ogre.y][ogre.x] = 'E';
+    displayMessage("恐ろしいオーガが現れた！");
+    drawDungeon();
 }
 
 function updateHpDisplay() {
@@ -454,7 +682,9 @@ function updateHpDisplay() {
         <h2>🙂 プレイヤー</h2>
         <p>HP: ${playerHp}</p>
         <p>攻撃力: ${playerAttack}</p>
+        ${equippedWeapon ? `<p>武器: ${equippedWeapon.name} (攻撃 +${equippedWeapon.attackBonus})</p>` : '<p>武器: なし</p>'}
         <p>防御力: ${playerDefense}</p>
+        ${equippedArmor ? `<p>鎧: ${equippedArmor.name} (防御 +${equippedArmor.defenseBonus})</p>` : '<p>鎧: なし</p>'}
         <p>レベル: ${playerLevel}</p>
         <p>経験値: ${playerExperience} (${experiencePercentage.toFixed(1)}%)</p>
         <div id="inventory">
