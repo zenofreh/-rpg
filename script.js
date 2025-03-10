@@ -2,6 +2,8 @@ const dungeonContainer = document.getElementById('dungeon');
 const playerHpDisplay = document.getElementById('player-info');
 const enemyHpDisplay = document.getElementById('enemy-info');
 const messageArea = document.getElementById('message-area');
+const toggleStatusButton = document.getElementById('toggle-status');
+const statusArea = document.getElementById('status-area');
 
 const dungeonWidth = 20;
 const dungeonHeight = 15;
@@ -34,6 +36,9 @@ let enemies = [];
 let playerHp = 100;
 let playerAttack = 10;
 let playerDefense = 5;
+let playerLevel = 1;
+let playerExperience = 0;
+const experienceToLevelUp = 100; // レベルアップに必要な経験値
 let equippedWeapon = null;
 let inventory = [];
 let isFighting = false;
@@ -370,6 +375,10 @@ function startBattle(enemy) {
             enemies = enemies.filter(e => e !== enemy);
             dungeonMap[enemy.y][enemy.x] = '.';
             drawDungeon();
+            
+            // 経験値の追加
+            gainExperience(enemy);
+
             updateHpDisplay();
             isFighting = false;
             return;
@@ -402,12 +411,52 @@ function startBattle(enemy) {
     }, 1500);
 }
 
+function gainExperience(enemy) {
+    // 敵の種類によって経験値を調整
+    let experienceGain = 0;
+    switch (enemy.type) {
+        case enemyTypes.slime:
+            experienceGain = 20;
+            break;
+        case enemyTypes.goblin:
+            experienceGain = 50;
+            break;
+        default:
+            experienceGain = 30; // デフォルトの経験値
+            break;
+    }
+
+    playerExperience += experienceGain;
+    displayMessage(`経験値を ${experienceGain} 獲得！`);
+
+    // レベルアップ判定
+    if (playerExperience >= experienceToLevelUp) {
+        levelUp();
+    }
+}
+
+function levelUp() {
+    playerLevel++;
+    playerExperience -= experienceToLevelUp;
+
+    // ステータスアップ
+    playerHp += 10;
+    playerAttack += 2;
+    playerDefense += 1;
+
+    displayMessage(`レベルアップ！ 現在レベル: ${playerLevel}`);
+}
+
 function updateHpDisplay() {
+    const experiencePercentage = Math.min(100, (playerExperience / experienceToLevelUp) * 100);
+
     playerHpDisplay.innerHTML = `
         <h2>🙂 プレイヤー</h2>
         <p>HP: ${playerHp}</p>
         <p>攻撃力: ${playerAttack}</p>
         <p>防御力: ${playerDefense}</p>
+        <p>レベル: ${playerLevel}</p>
+        <p>経験値: ${playerExperience} (${experiencePercentage.toFixed(1)}%)</p>
         <div id="inventory">
             <h2>インベントリ</h2>
             <ul id="inventory-items"></ul>
@@ -427,17 +476,6 @@ function updateHpDisplay() {
             `;
         }
     });
-
-    document.addEventListener('DOMContentLoaded', () => {
-        const toggleStatusButton = document.getElementById('toggle-status');
-        const statusArea = document.getElementById('status-area');
-    
-        toggleStatusButton.addEventListener('click', () => {
-            statusArea.classList.toggle('collapsed');
-        });
-    });
-
-
     updateInventoryUI();
 }
 
@@ -486,4 +524,10 @@ function initGame() {
     startGameLoop();
 }
 
-initGame();
+toggleStatusButton.addEventListener('click', () => {
+    statusArea.classList.toggle('collapsed');
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    initGame();
+});
