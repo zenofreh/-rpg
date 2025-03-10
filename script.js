@@ -428,6 +428,15 @@ function updateHpDisplay() {
         }
     });
 
+    document.addEventListener('DOMContentLoaded', () => {
+        const toggleStatusButton = document.getElementById('toggle-status');
+        const statusArea = document.getElementById('status-area');
+    
+        toggleStatusButton.addEventListener('click', () => {
+            statusArea.classList.toggle('collapsed');
+        });
+    });
+
 
     updateInventoryUI();
 }
