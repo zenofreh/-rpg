@@ -221,21 +221,30 @@ function createEnemy(enemyType, playerLevel) {
     let hp = enemyType.hp;
     let attack = enemyType.attack;
     let defense = enemyType.defense;
+    let speed = enemyType.speed;
 
-    if (enemyType === enemyTypes.boss_ogre) {
+    if (enemyType.name === enemyTypes.boss_ogre.name) {
         // オーガのステータスをプレイヤーレベルを5で割った数倍にする
-        let ogreModifier = Math.max(1, Math.floor(playerLevel / 5)); // 最低でも1倍
-
-        hp = Math.floor(enemyType.hp * ogreModifier);
+        let ogrehpModifier = playerLevel / 5; // 5レベルごとに倍増
+        let ogreModifier = playerLevel / 5; // 5レベルごとに倍増
+    
+        hp = Math.floor(enemyType.hp * ogrehpModifier);
         attack = Math.floor(enemyType.attack * ogreModifier);
         defense = Math.floor(enemyType.defense * ogreModifier);
+        speed = Math.floor(enemyType.speed * ogreModifier);
     } else {
-        // 他の敵は攻撃力と防御力が少しだけ上昇
-        let levelModifier = playerLevel * 0.1; // 1レベルあたり10%上昇
-
-        attack = Math.floor(enemyType.attack * (1 + levelModifier));
-        defense = Math.floor(enemyType.defense * (1 + levelModifier));
+        // 他の敵はすべてのステータスがレベルに応じて上昇
+        let levelModifier = 1 + (playerLevel * 0.5); // 1レベルあたり50%上昇
+        let levehplModifier = 1 + (playerLevel * 0.2); // 1レベルあたり50%上昇
+    
+        hp = Math.floor(enemyType.hp * levelhpModifier);
+        attack = Math.floor(enemyType.attack * levelModifier);
+        defense = Math.floor(enemyType.defense * levelModifier);
+        speed = Math.floor(enemyType.speed * levelModifier);
     }
+
+    console.log(`Created enemy: ${enemyType.name}, HP: ${hp}, Attack: ${attack}, Defense: ${defense}, Speed: ${speed}`);
+
 
     return {
         type: enemyType,
@@ -245,7 +254,7 @@ function createEnemy(enemyType, playerLevel) {
         maxHp: hp,
         attack: attack,
         defense: defense,
-        speed: enemyType.speed,
+        speed: speed,
         sightRange: enemyType.sightRange,
         x: 0,
         y: 0,
@@ -552,7 +561,7 @@ function startBattle(enemy) {
 
     let battleInterval = setInterval(() => {
         // プレイヤーの攻撃
-        let damageToEnemy = Math.max(playerAttack - enemy.type.defense, 1);
+        let damageToEnemy = Math.max(playerAttack - enemy.defense, 1); // 修正: enemy.type.defense -> enemy.defense
         const hitRoll = Math.random(); // 0-1
         if (hitRoll < 0.8) { //80% hit chance for now
             enemy.hp -= damageToEnemy;
@@ -587,7 +596,7 @@ function startBattle(enemy) {
         }
 
         // 敵の攻撃
-        let damageToPlayer = Math.max(enemy.type.attack - playerDefense, 1);
+        let damageToPlayer = Math.max(enemy.attack - playerDefense, 1); // 修正: enemy.type.attack -> enemy.attack
         const enemyHitRoll = Math.random();
         if (enemyHitRoll < 0.7) { //70% hit chance
             playerHp -= damageToPlayer;
@@ -597,7 +606,6 @@ function startBattle(enemy) {
             displayMessage(enemy.name + " の攻撃！プレイヤーは攻撃を回避した！", 'miss');
         }
         updateHpDisplay();
-
 
         if (playerHp <= 0) {
             clearInterval(battleInterval);
@@ -699,9 +707,9 @@ function updateHpDisplay() {
             enemyHpDisplay.innerHTML += `
                 <div>
                     <h3>${enemy.name}</h3>
-                    <p>HP: ${enemy.hp} / ${enemy.type.hp}</p>
-                    <p>攻撃力: ${enemy.type.attack}</p>
-                    <p>防御力: ${enemy.type.defense}</p>
+                    <p>HP: ${enemy.hp} / ${enemy.maxHp}</p> <!-- 修正: enemy.type.hp -> enemy.maxHp -->
+                    <p>攻撃力: ${enemy.attack}</p> <!-- 修正: enemy.type.attack -> enemy.attack -->
+                    <p>防御力: ${enemy.defense}</p> <!-- 修正: enemy.type.defense -> enemy.defense -->
                 </div>
             `;
         }
