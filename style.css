@@ -23,9 +23,10 @@ body {
 
 /* ステータスエリアのスタイル */
 #status-area {
-    width: 25%; /* 画面の25%を占める */
+    width: 20%; /* 画面の20%を占める */
     padding: 1rem;
     box-sizing: border-box; /* paddingを含めて幅を計算 */
+    transition: width 0.3s ease; /* アニメーション */
 }
 
 #status-area > div {
@@ -35,9 +36,34 @@ body {
     border-radius: 5px;
 }
 
+/* ステータスエリアを閉じた時のスタイル */
+#status-area.collapsed {
+    width: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+#status-area.collapsed > * {
+  display: none;
+}
+
+/* トグルボタン */
+#toggle-status {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    background-color: #555;
+    color: #eee;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    cursor: pointer;
+    z-index: 10;
+}
+
 /* ゲームコンテナのスタイル (ダンジョンと操作方法) */
 #game-container {
-    width: 50%; /* 画面の50%を占める */
+    width: 60%; /* 画面の60%を占める */
     padding: 1rem;
     box-sizing: border-box; /* paddingを含めて幅を計算 */
     display: flex;
@@ -47,7 +73,7 @@ body {
 
 /* メッセージエリアのスタイル */
 #message-area {
-    width: 25%; /* 画面の25%を占める */
+    width: 20%; /* 画面の20%を占める */
     padding: 1rem;
     box-sizing: border-box; /* paddingを含めて幅を計算 */
     background-color: #444;
@@ -55,6 +81,11 @@ body {
     height: 600px;
     overflow-y: scroll;
     font-size: 0.8em;
+}
+
+/* ステータスが非表示の時のメッセージ欄のスタイル */
+#app-container:has(#status-area.collapsed) #message-area {
+    width: 40%; /* ステータスエリアが非表示の場合、幅を40%にする */
 }
 
 /* 隠し見出し */
@@ -123,5 +154,6 @@ body {
 
     #message-area {
         height: 300px; /* 高さの調整 */
+        margin-left: 0;
     }
 }
