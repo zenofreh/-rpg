@@ -1,0 +1,127 @@
+/* 全体レイアウト */
+body {
+    font-family: monospace;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    background-color: #333;
+    color: #eee;
+}
+
+/* アプリケーション全体のコンテナ */
+#app-container {
+    display: flex;
+    width: 95%;
+    max-width: 1200px;
+    margin: 1rem auto;
+    background-color: #222;
+    border-radius: 5px;
+    overflow: hidden; /* 子要素がはみ出さないように */
+}
+
+/* ステータスエリアのスタイル */
+#status-area {
+    width: 25%; /* 画面の25%を占める */
+    padding: 1rem;
+    box-sizing: border-box; /* paddingを含めて幅を計算 */
+}
+
+#status-area > div {
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+    background-color: #444;
+    border-radius: 5px;
+}
+
+/* ゲームコンテナのスタイル (ダンジョンと操作方法) */
+#game-container {
+    width: 50%; /* 画面の50%を占める */
+    padding: 1rem;
+    box-sizing: border-box; /* paddingを含めて幅を計算 */
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* 子要素を中央揃え */
+}
+
+/* メッセージエリアのスタイル */
+#message-area {
+    width: 25%; /* 画面の25%を占める */
+    padding: 1rem;
+    box-sizing: border-box; /* paddingを含めて幅を計算 */
+    background-color: #444;
+    border-radius: 5px;
+    height: 600px;
+    overflow-y: scroll;
+    font-size: 0.8em;
+}
+
+/* 隠し見出し */
+.visually-hidden {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+
+/* ダンジョンのスタイル */
+#dungeon {
+    display: grid;
+    border: 1px solid #555;
+    /* ダンジョンのサイズを調整 */
+    width: 100%;
+    height: auto;
+}
+
+#dungeon .cell {
+    width: 2rem;
+    height: 2rem;
+    text-align: center;
+    line-height: 2rem;
+    font-size: 1.5rem;
+    padding: 0;
+    margin: 0;
+    border: 0;
+}
+
+/* 各セルのスタイルは変更なし */
+.wall { background-color: #555; color: transparent; }
+.wall::before { content: '🧱'; color: #555; }
+.floor { background-color: #777; color: transparent; }
+.floor::before { content: '🌱'; color: #777; }
+.player { background-color: transparent; color: transparent; }
+.player::before { content: '🙂'; color: blue; }
+.enemy { background-color: transparent; color: transparent; }
+.enemy::before { content: '👿'; color: red; }
+.item-weapon { background-color: transparent; color: transparent; }
+.item-weapon::before { content: '⚔️'; color: gold; }
+.item-potion { background-color: transparent; color: transparent; }
+.item-potion::before { content: '🧪'; color: lightgreen; }
+
+#controls {
+    margin-top: 10px;
+    text-align: center;
+}
+
+/* メディアクエリ: 画面幅が768px以下の場合 */
+@media (max-width: 768px) {
+    #app-container {
+        flex-direction: column; /* 縦並びにする */
+    }
+
+    #status-area,
+    #game-container,
+    #message-area {
+        width: 100%; /* 幅を100%にする */
+    }
+
+    #message-area {
+        height: 300px; /* 高さの調整 */
+    }
+}

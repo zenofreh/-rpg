@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ローグライクRPG プロトタイプ</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app-container">
+        <div id="status-area" aria-live="polite">
+            <div id="player-status">
+                <h2>プレイヤー情報</h2>
+                <div id="player-info">
+                    <p>名前: <span id="player-name"></span></p>
+                    <p>HP: <span id="player-hp"></span></p>
+                    <p>攻撃力: <span id="player-attack"></span></p>
+                    <p>防御力: <span id="player-defense"></span></p>
+                    <p>レベル: <span id="player-level"></span></p>
+                    <p>経験値: <span id="player-exp"></span></p>
+                </div>
+                
+            </div>
+            <div id = "enemy-status">
+                <h2>敵情報</h2>
+                <div id="enemy-info">
+                    <p id="enemy-name">名前: </p>
+                    <p id="enemy-hp">HP: </p>
+                    <p id="enemy-attack">攻撃力: </p>
+                    <p id="enemy-defense">防御力: </p>
+                </div>
+            </div>
+        </div>
+
+        <div id="game-container" role="main">
+            <h1 class="visually-hidden">ローグライクRPG</h1>
+            <div id="dungeon" aria-live="assertive" role="grid"></div>
+            <div id="controls">
+              <h2>操作方法</h2>
+              <p>矢印キー (または W, A, S, D) で移動</p>
+            </div>
+        </div>
+
+        <div id="message-area" aria-live="polite" role="log"></div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
