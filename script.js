@@ -227,7 +227,7 @@ function createEnemy(enemyType, playerLevel) {
         // オーガのステータスをプレイヤーレベルを5で割った数倍にする
         let ogrehpModifier = playerLevel / 5; // 5レベルごとに倍増
         let ogreModifier = playerLevel / 5; // 5レベルごとに倍増
-    
+
         hp = Math.floor(enemyType.hp * ogrehpModifier);
         attack = Math.floor(enemyType.attack * ogreModifier);
         defense = Math.floor(enemyType.defense * ogreModifier);
@@ -235,16 +235,13 @@ function createEnemy(enemyType, playerLevel) {
     } else {
         // 他の敵はすべてのステータスがレベルに応じて上昇
         let levelModifier = 1 + (playerLevel * 0.5); // 1レベルあたり50%上昇
-        let levehplModifier = 1 + (playerLevel * 0.2); // 1レベルあたり50%上昇
-    
+        let levelhpModifier = 1 + (playerLevel * 0.2); // 1レベルあたり20%上昇
+
         hp = Math.floor(enemyType.hp * levelhpModifier);
         attack = Math.floor(enemyType.attack * levelModifier);
         defense = Math.floor(enemyType.defense * levelModifier);
         speed = Math.floor(enemyType.speed * levelModifier);
     }
-
-    console.log(`Created enemy: ${enemyType.name}, HP: ${hp}, Attack: ${attack}, Defense: ${defense}, Speed: ${speed}`);
-
 
     return {
         type: enemyType,
