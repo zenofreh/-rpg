@@ -94,24 +94,53 @@ let itemPositions = [
 
 function generateDungeon() {
     dungeonMap = [];
-    enemies = [];
-
-    // 壁で初期化
     for (let y = 0; y < dungeonHeight; y++) {
-        dungeonMap[y] = [];
-        for (let x = 0; x < dungeonWidth; x++) {
-            dungeonMap[y][x] = '#';
+        dungeonMap[y] = Array(dungeonWidth).fill('#');
+    }
+
+    let rooms = [];
+
+    function splitSpace(x, y, width, height) {
+        if (width < 5 || height < 5) {
+            // 最小サイズに達したら部屋を作成
+            let roomWidth = Math.floor(Math.random() * (width - 2)) + 2;
+            let roomHeight = Math.floor(Math.random() * (height - 2)) + 2;
+            let roomX = x + Math.floor(Math.random() * (width - roomWidth));
+            let roomY = y + Math.floor(Math.random() * (height - roomHeight));
+
+            rooms.push({ x: roomX, y: roomY, width: roomWidth, height: roomHeight });
+            return;
+        }
+
+        let splitHorizontal = Math.random() < 0.5;
+        if (splitHorizontal) {
+            let splitY = y + Math.floor(Math.random() * (height - 1)) + 1;
+            splitSpace(x, y, width, splitY - y);
+            splitSpace(x, splitY, width, height - (splitY - y));
+        } else {
+            let splitX = x + Math.floor(Math.random() * (width - 1)) + 1;
+            splitSpace(x, y, splitX - x, height);
+            splitSpace(splitX, y, width - (splitX - x), height);
         }
     }
 
-    // 部屋を生成
-    const roomCount = 4; // 部屋数
-    for (let i = 0; i < roomCount; i++) {
-        createRoom();
+    splitSpace(1, 1, dungeonWidth - 2, dungeonHeight - 2);
+
+    // 部屋を描画
+    rooms.forEach(room => {
+        for (let y = room.y; y < room.y + room.height; y++) {
+            for (let x = room.x; x < room.x + room.width; x++) {
+                dungeonMap[y][x] = '.';
+            }
+        }
+    });
+
+    // 部屋を接続 (簡単な方法: 最も近い部屋と繋ぐ)
+    for (let i = 0; i < rooms.length - 1; i++) {
+        connectTwoPoints({x: Math.floor(rooms[i].x + rooms[i].width / 2), y: Math.floor(rooms[i].y + rooms[i].height / 2)},
+                         {x: Math.floor(rooms[i+1].x + rooms[i+1].width / 2), y: Math.floor(rooms[i+1].y + rooms[i+1].height / 2)});
     }
 
-    // 通路を生成（簡単な方法：部屋同士を繋ぐ）
-    connectRooms();
 
     // プレイヤーの初期位置
     playerPosition = findValidSpawnPoint();
