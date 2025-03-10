@@ -8,7 +8,8 @@
 </head>
 <body>
     <div id="app-container">
-        <div id="status-area" aria-live="polite">
+        <button id="toggle-status">ステータス表示/非表示</button>
+        <div id="status-area" aria-live="polite" class="collapsed">
             <div id="player-status">
                 <h2>プレイヤー情報</h2>
                 <div id="player-info">
@@ -19,7 +20,10 @@
                     <p>レベル: <span id="player-level"></span></p>
                     <p>経験値: <span id="player-exp"></span></p>
                 </div>
-                
+                <div id="inventory">
+                    <h2>インベントリ</h2>
+                    <ul id="inventory-items"></ul>
+                </div>
             </div>
             <div id = "enemy-status">
                 <h2>敵情報</h2>
