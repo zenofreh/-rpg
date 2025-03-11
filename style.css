@@ -1,13 +1,15 @@
+/* style.css */
+
 /* 全体レイアウト */
 body {
-    font-family: monospace;
+    font-family: 'Arial', sans-serif;
     display: flex;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
     margin: 0;
-    background-color: #333;
-    color: #eee;
+    background-color: #1e1e1e;
+    color: #f0f0f0;
 }
 
 /* アプリケーション全体のコンテナ */
@@ -16,9 +18,10 @@ body {
     width: 95%;
     max-width: 1200px;
     margin: 1rem auto;
-    background-color: #222;
-    border-radius: 5px;
+    background-color: #2c2c2c;
+    border-radius: 10px;
     overflow: hidden; /* 子要素がはみ出さないように */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
 }
 
 /* ステータスエリアのスタイル */
@@ -32,7 +35,7 @@ body {
 #status-area > div {
     margin-bottom: 1rem;
     padding: 0.5rem;
-    background-color: #444;
+    background-color: #3c3c3c;
     border-radius: 5px;
 }
 
@@ -52,13 +55,18 @@ body {
     position: absolute;
     top: 1rem;
     left: 1rem;
-    background-color: #555;
-    color: #eee;
+    background-color: #444;
+    color: #f0f0f0;
     border: none;
     padding: 0.5rem 1rem;
     border-radius: 5px;
     cursor: pointer;
     z-index: 10;
+    transition: background-color 0.3s ease;
+}
+
+#toggle-status:hover {
+    background-color: #555;
 }
 
 /* ゲームコンテナのスタイル (ダンジョンと操作方法) */
@@ -69,6 +77,7 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center; /* 子要素を中央揃え */
+    position: relative; /* 相対位置指定 */
 }
 
 /* メッセージエリアのスタイル */
@@ -76,11 +85,12 @@ body {
     width: 20%; /* 画面の20%を占める */
     padding: 1rem;
     box-sizing: border-box; /* paddingを含めて幅を計算 */
-    background-color: #444;
+    background-color: #3c3c3c;
     border-radius: 5px;
     height: 600px;
     overflow-y: scroll;
     font-size: 0.8em;
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
 }
 
 /* ステータスが非表示の時のメッセージ欄のスタイル */
@@ -102,12 +112,19 @@ body {
 }
 
 /* ダンジョンのスタイル */
+#dungeon-wrapper {
+    position: relative;
+    width: 100%;
+}
+
 #dungeon {
     display: grid;
     border: 1px solid #555;
     /* ダンジョンのサイズを調整 */
     width: 100%;
     height: auto;
+    position: relative;
+    z-index: 1;
 }
 
 #dungeon .cell {
@@ -134,6 +151,48 @@ body {
 .item-weapon::before { content: '⚔️'; color: gold; }
 .item-potion { background-color: transparent; color: transparent; }
 .item-potion::before { content: '🧪'; color: lightgreen; }
+.item-scroll { background-color: transparent; color: transparent; }
+.item-scroll::before { content: '📜'; color: orange; }
+.item-ring { background-color: transparent; color: transparent; }
+.item-ring::before { content: '💍'; color: skyblue; }
+.item-food { background-color: transparent; color: transparent; }
+.item-food::before { content: '🍞'; color: khaki; }
+.item-shoes { background-color: transparent; color: transparent; }
+.item-shoes::before { content: '👞'; color: brown; }
+
+/* メッセージの種類に応じたスタイル */
+.message.item-message {
+    color: lightgreen;
+    font-style: italic;
+}
+
+.message.level-up-message {
+    color: gold;
+    font-weight: bold;
+}
+
+.message.critical-message {
+    color: red;
+    font-weight: bold;
+}
+
+.damage-text {
+    position: absolute;
+    color: red;
+    font-weight: bold;
+    animation: damage-popup 1s forwards;
+}
+
+@keyframes damage-popup {
+    0% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+}
 
 #controls {
     margin-top: 10px;
