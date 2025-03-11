@@ -706,56 +706,79 @@ function updateInventoryUI() {
             useItem(item);
         });
         inventoryItemsList.appendChild(listItem);
+
+        // アイテムを使用するボタン
+        const useButton = document.createElement('button');
+        useButton.textContent = '使う';
+        useButton.addEventListener('click', () => {
+            useItem(item);
+        });
+
+        // アイテムを捨てるボタン
+        const dropButton = document.createElement('button');
+        dropButton.textContent = '捨てる';
+        dropButton.addEventListener('click', () => {
+            dropItemFromInventory(item);
+        });
+
+        listItem.appendChild(useButton);
+        listItem.appendChild(dropButton);
+        inventoryItemsList.appendChild(listItem);
     });
 }
 
-    function useItem(item) {
-        if (item.type === 'potion') {
-            playerHp += item.healAmount;
-            playerHp = Math.min(playerHp, 100);
-            useConsumableItem(item);
-            updateHpDisplay();
-            displayMessage(`${item.name} を使って HP が ${item.healAmount} 回復した！`, 'item');
-        } else if (item.type === 'weapon') {
-            equipWeapon(item);
-        } else if (item.type === 'consumable') {
-            useConsumable(item);
-            useConsumableItem(item);
-        } else if (item.type === 'armor') {
-            equipArmor(item);
-        } else if (item.type === 'scroll') {
-            useScroll(item);
-            useConsumableItem(item);
-        } else if (item.type === 'ring') {
-            equipRing(item);
-        } else if (item.type === 'food') {
-            eatFood(item);
-            useConsumableItem(item);
-        } else if (item.type === 'shoes') {
-            equipShoes(item);
-        }
-    
-        // 消耗品のみインベントリから1つだけ消費
-        if (item.type === 'potion' || item.type === 'consumable' || item.type === 'scroll' || item.type === 'food') {
-            removeItemFromInventory(item);
-        }
-    }
-    
-    function removeItemFromInventory(itemToRemove) {
-        const index = inventory.findIndex(item => item === itemToRemove);
-        if (index > -1) {
-            inventory.splice(index, 1); // インベントリから1つ削除
-        }
-    
-        // 装備中の靴を外した場合、回避率を戻す
-        if (equippedShoes === itemToRemove) {
-            playerEvasion -= equippedShoes.evasionBonus;
-            equippedShoes = null;
-            updateHpDisplay();
-        }
-    
+function dropItemFromInventory(item) {
+    const index = inventory.findIndex(i => i === item);
+    if (index > -1) {
+        inventory.splice(index, 1); // インベントリから1つ削除
+        displayMessage(`${item.name} を捨てた！`);
         updateInventoryUI();
     }
+}
+
+function useItem(item) {
+    if (item.type === 'potion') {
+        playerHp += item.healAmount;
+        playerHp = Math.min(playerHp, 100);
+        updateHpDisplay();
+        displayMessage(`${item.name} を使って HP が ${item.healAmount} 回復した！`, 'item');
+    } else if (item.type === 'weapon') {
+        equipWeapon(item);
+    } else if (item.type === 'consumable') {
+        useConsumable(item);
+    } else if (item.type === 'armor') {
+        equipArmor(item);
+    } else if (item.type === 'scroll') {
+        useScroll(item);
+    } else if (item.type === 'ring') {
+        equipRing(item);
+    } else if (item.type === 'food') {
+        eatFood(item);
+    } else if (item.type === 'shoes') {
+        equipShoes(item);
+    }
+
+    // 消耗品のみインベントリから1つだけ消費
+    if (item.type === 'potion' || item.type === 'consumable' || item.type === 'scroll' || item.type === 'food') {
+        removeItemFromInventory(item);
+    }
+}
+
+function removeItemFromInventory(itemToRemove) {
+    const index = inventory.findIndex(item => item === itemToRemove);
+    if (index > -1) {
+        inventory.splice(index, 1); // インベントリから1つ削除
+    }
+
+    // 装備中の靴を外した場合、回避率を戻す
+    if (equippedShoes === itemToRemove) {
+        playerEvasion -= equippedShoes.evasionBonus;
+        equippedShoes = null;
+        updateHpDisplay();
+    }
+
+    updateInventoryUI();
+}
 
 function equipWeapon(weapon) {
     if (equippedWeapon) {
