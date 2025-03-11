@@ -680,6 +680,16 @@ function updateInventoryUI() {
     if (!inventoryItemsList) return;
     inventoryItemsList.innerHTML = '';
 
+    // インベントリ内のアイテムを種類ごとに集計
+    const itemCounts = {};
+    inventory.forEach(item => {
+        if (itemCounts[item.name]) {
+            itemCounts[item.name].count++;
+        } else {
+            itemCounts[item.name] = { item: item, count: 1 };
+        }
+    });
+
     // インベントリをフィルタリングして、装備中のアイテムを除外
     const filteredInventory = inventory.filter(item => {
         if (item.type === 'weapon' && equippedWeapon === item) return false;
@@ -688,9 +698,10 @@ function updateInventoryUI() {
         return true;
     });
 
+    // 集計されたアイテムを表示
     filteredInventory.forEach(item => {
         const listItem = document.createElement('li');
-        listItem.textContent = `${item.name} (${item.display})`;
+        listItem.textContent = `${item.name} (${item.display}) x${itemCounts[item.name].count}`; // アイテム名と個数を表示
         listItem.addEventListener('click', () => {
             useItem(item);
         });
@@ -698,29 +709,53 @@ function updateInventoryUI() {
     });
 }
 
-function useItem(item) {
-    if (item.type === 'potion') {
-        playerHp += item.healAmount;
-        playerHp = Math.min(playerHp, 100);
-        updateHpDisplay();
-        removeItemFromInventory(item);
-        displayMessage(`${item.name} を使って HP が ${item.healAmount} 回復した！`);
-    } else if (item.type === 'weapon') {
-        equipWeapon(item);
-    } else if (item.type === 'consumable') {
-        useConsumable(item);
-    } else if (item.type === 'armor') {
-        equipArmor(item);
-    } else if (item.type === 'scroll') {
-        useScroll(item);
-    } else if (item.type === 'ring') {
-        equipRing(item);
-    } else if (item.type === 'food') {
-        eatFood(item);
-    } else if (item.type === 'shoes') {
-        equipShoes(item);
+    function useItem(item) {
+        if (item.type === 'potion') {
+            playerHp += item.healAmount;
+            playerHp = Math.min(playerHp, 100);
+            useConsumableItem(item);
+            updateHpDisplay();
+            displayMessage(`${item.name} を使って HP が ${item.healAmount} 回復した！`, 'item');
+        } else if (item.type === 'weapon') {
+            equipWeapon(item);
+        } else if (item.type === 'consumable') {
+            useConsumable(item);
+            useConsumableItem(item);
+        } else if (item.type === 'armor') {
+            equipArmor(item);
+        } else if (item.type === 'scroll') {
+            useScroll(item);
+            useConsumableItem(item);
+        } else if (item.type === 'ring') {
+            equipRing(item);
+        } else if (item.type === 'food') {
+            eatFood(item);
+            useConsumableItem(item);
+        } else if (item.type === 'shoes') {
+            equipShoes(item);
+        }
+    
+        // 消耗品のみインベントリから1つだけ消費
+        if (item.type === 'potion' || item.type === 'consumable' || item.type === 'scroll' || item.type === 'food') {
+            removeItemFromInventory(item);
+        }
     }
-}
+    
+    function removeItemFromInventory(itemToRemove) {
+        const index = inventory.findIndex(item => item === itemToRemove);
+        if (index > -1) {
+            inventory.splice(index, 1); // インベントリから1つ削除
+        }
+    
+        // 装備中の靴を外した場合、回避率を戻す
+        if (equippedShoes === itemToRemove) {
+            playerEvasion -= equippedShoes.evasionBonus;
+            equippedShoes = null;
+            updateHpDisplay();
+        }
+    
+        updateInventoryUI();
+    }
 
 function equipWeapon(weapon) {
     if (equippedWeapon) {
@@ -807,7 +842,10 @@ function useConsumable(item) {
 }
 
 function removeItemFromInventory(itemToRemove) {
-    inventory = inventory.filter(item => item !== itemToRemove);
+    const index = inventory.findIndex(item => item === itemToRemove);
+    if (index > -1) {
+        inventory.splice(index, 1); // インベントリから1つ削除
+    }
 
     // 装備中の靴を外した場合、回避率を戻す
     if (equippedShoes === itemToRemove) {
@@ -839,6 +877,12 @@ function displayMessage(message, type = 'normal') {
         case 'miss':
             messageElement.classList.add('miss-message');
             break;
+        case 'item': // アイテム関連のメッセージ
+            messageElement.classList.add('item-message');
+            break;
+        case 'levelUp': // レベルアップのメッセージ
+            messageElement.classList.add('level-up-message');
+            break;
         default:
             break;
     }
@@ -847,6 +891,7 @@ function displayMessage(message, type = 'normal') {
     messageArea.scrollTop = messageArea.scrollHeight;
     messageArea.setAttribute('aria-label', message); // スクリーンリーダー向けにメッセージを設定
 }
+
 
 function dropItem(enemy) {
     const dropRate = 0.2; // 基本ドロップ率 (20%)
