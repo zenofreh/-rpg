@@ -176,6 +176,12 @@ body {
     font-weight: bold;
 }
 
+/* style.css */
+.message.tutorial-message {
+    color: lightblue;
+    font-weight: bold;
+}
+
 .damage-text {
     position: absolute;
     color: red;
@@ -215,4 +221,23 @@ body {
         height: 300px; /* 高さの調整 */
         margin-left: 0;
     }
+}
+
+#reset-button {
+  display: none;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 1rem 2rem;
+  background-color: #444;
+  color: #f0f0f0;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  z-index: 10;
+}
+
+#reset-button:hover {
+  background-color: #555;
 }
