@@ -1278,7 +1278,8 @@ function equipShoes(shoes) {
         generateTutorialMap(); // チュートリアルマップを生成
         drawDungeon();
         updateHpDisplay();
-        displayMessage("ゲーム開始！");
+         displayMessage("このゲームはzenoによって作られました。");
+         displayMessage("ゲーム開始！");
         displayTutorialMessages();
         startGameLoop();
         updateHpDisplay();
