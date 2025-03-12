@@ -126,6 +126,40 @@ const enemyTypes = {
     minLevel: 12,
     xp: 100
   },
+  vampire: {
+    name: "ヴァンパイア",
+    display: '🧛',
+    hp: 120,
+    attack: 20,
+    defense: 8,
+    speed: 35,
+    sightRange: 10,
+    minLevel: 7,
+    xp: 80
+  },
+  lich: {
+    name: "リッチ",
+    display: '🧙',
+    hp: 150,
+    attack: 25,
+    defense: 10,
+    speed: 30,
+    sightRange: 12,
+    minLevel: 9,
+    xp: 100
+  },
+  demon: {
+    name: "デーモン",
+    display: '👹',
+    hp: 200,
+    attack: 30,
+    defense: 15,
+    speed: 40,
+    sightRange: 15,
+    fireAttack: 10,
+    minLevel: 11,
+    xp: 120
+  },
   boss_ogre: {
     name: "オーガ",
     display: '👹',
@@ -280,6 +314,50 @@ const items = {
       rarity: 4,
       minLevel: 7
     },
+    weapon_hammer: {
+        name: "ウォーハンマー",
+        type: "weapon",
+        attackBonus: 12,
+        hitRate: 0.65,
+        display: '🔨',
+        rarity: 4,
+        minLevel: 6
+      },
+      weapon_staff: {
+        name: "魔法の杖",
+        type: "weapon",
+        attackBonus: 5,
+        hitRate: 0.9,
+        display: '🪄',
+        rarity: 3,
+        minLevel: 4,
+        magicDamage: 5
+      },
+      armor_helmet: {
+        name: "鉄の兜",
+        type: "armor",
+        defenseBonus: 4,
+        display: '🪖',
+        rarity: 3,
+        minLevel: 4
+      },
+      armor_boots: {
+        name: "鉄のブーツ",
+        type: "armor",
+        defenseBonus: 3,
+        display: '🥾',
+        rarity: 3,
+        minLevel: 4
+      },
+      ring_magic: {
+        name: "魔法の指輪",
+        type: "ring",
+        magicBonus: 5,
+        display: '💍',
+        description: "魔法攻撃力を上げる",
+        rarity: 4,
+        minLevel: 5
+      },
     potion_heal: {
       name: "回復薬",
       type: "potion",
@@ -356,7 +434,31 @@ const items = {
       description: "HPを回復する",
       rarity: 2,
       minLevel: 3
-    }
+    },
+    potion_mana: {
+        name: "マナポーション",
+        type: "potion",
+        manaAmount: 30,
+        display: '🧪',
+        rarity: 2,
+        minLevel: 1
+      },
+      potion_super_mana: {
+        name: "スーパー・マナポーション",
+        type: "potion",
+        manaAmount: 60,
+        display: '🧪',
+        rarity: 3,
+        minLevel: 5
+      },
+      scroll_lightning: {
+        name: "ライトニングの巻物",
+        type: "scroll",
+        display: '📜',
+        description: "敵に雷を落とす",
+        rarity: 4,
+        minLevel: 7
+      },
   };
 
 function generateDungeon() {
@@ -795,10 +897,15 @@ function dropItemFromInventory(item) {
 
 function useItem(item) {
     if (item.type === 'potion') {
-        playerHp += item.healAmount;
-        playerHp = Math.min(playerHp, 100);
-        updateHpDisplay();
-        displayMessage(`${item.name} を使って HP が ${item.healAmount} 回復した！`, 'item');
+        if (item.manaAmount) {
+            playerMana += item.manaAmount;
+            playerMana = Math.min(playerMana, 100);
+            displayMessage(`${item.name} を使って マナ が ${item.manaAmount} 回復した！`, 'item');
+        } else {
+            playerHp += item.healAmount;
+            playerHp = Math.min(playerHp, 100);
+            displayMessage(`${item.name} を使って HP が ${item.healAmount} 回復した！`, 'item');
+        }
         removeItemFromInventory(item); // 消耗品を使用した後に削除
     } else if (item.type === 'weapon') {
         equipWeapon(item);
@@ -818,6 +925,7 @@ function useItem(item) {
     } else if (item.type === 'shoes') {
         equipShoes(item);
     }
+
 
 
     // 消耗品のみインベントリから1つだけ消費
@@ -850,6 +958,7 @@ function equipWeapon(weapon) {
     equippedWeapon = weapon;
     playerAttack += equippedWeapon.attackBonus;
     playerAccuracy += equippedWeapon.hitRate;
+    removeItemFromInventory(weapon); // 装備したアイテムをインベントリから削除
     updateHpDisplay();
     updateInventoryUI();
     displayMessage(`${weapon.name} を装備した！ 攻撃力 +${weapon.attackBonus}、命中率 +${weapon.hitRate}`);
@@ -862,6 +971,7 @@ function equipArmor(armor) {
     }
     equippedArmor = armor;
     playerDefense += equippedArmor.defenseBonus;
+    removeItemFromInventory(armor);
     updateHpDisplay();
     updateInventoryUI();
     displayMessage(`${armor.name} を装備した！ 防御力 +${armor.defenseBonus}`);
@@ -874,6 +984,7 @@ function equipShoes(shoes) {
     }
     equippedShoes = shoes;
     playerEvasion += equippedShoes.evasionBonus;
+    removeItemFromInventory(shoes);
     updateHpDisplay();
     updateInventoryUI();
     displayMessage(`${shoes.name} を装備した！回避率 +${shoes.evasionBonus * 100}%`);
@@ -1205,29 +1316,36 @@ function equipShoes(shoes) {
     }
     
     function useScroll(scroll) {
-      if (scroll.name === "テレポートの巻物") {
-        let newPosition = getRandomFloorPosition();
-        playerPosition.x = newPosition.x;
-        playerPosition.y = newPosition.y;
-        displayMessage("テレポートした！");
+        if (scroll.name === "テレポートの巻物") {
+            let newPosition = getRandomFloorPosition();
+            playerPosition.x = newPosition.x;
+            playerPosition.y = newPosition.y;
+            displayMessage("テレポートした！");
+        } else if (scroll.name === "ファイアボールの巻物") {
+            displayMessage("ファイアボールを投げた！");
+            // ファイアボールの効果を実装
+        } else if (scroll.name === "ライトニングの巻物") {
+            displayMessage("ライトニングを発動した！");
+            // ライトニングの効果を実装
+        }
         removeItemFromInventory(scroll);
         drawDungeon();
         updateHpDisplay();
-      }
     }
     
     function equipRing(ring) {
         if (ring.name === "守りの指輪") {
             playerDefense += ring.defenseBonus;
             displayMessage(`${ring.name} を装備した！防御力 +${ring.defenseBonus}`);
-            removeItemFromInventory(ring);
-            updateHpDisplay();
         } else if (ring.name === "力の指輪") {
             playerAttack += ring.attackBonus;
             displayMessage(`${ring.name} を装備した！攻撃力 +${ring.attackBonus}`);
-            removeItemFromInventory(ring);
-            updateHpDisplay();
+        } else if (ring.name === "魔法の指輪") {
+            playerMagic += ring.magicBonus;
+            displayMessage(`${ring.name} を装備した！魔法攻撃力 +${ring.magicBonus}`);
         }
+        removeItemFromInventory(ring);
+        updateHpDisplay();
     }
     
     function eatFood(food) {
