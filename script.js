@@ -459,6 +459,14 @@ const items = {
         rarity: 4,
         minLevel: 7
       },
+      zeno_sword: {
+        name: "zenoの剣",
+        type: "weapon",
+        attackBonus: 100,
+        hitRate: 1.0,
+        display: '⚔️',
+        rarity: 6,
+      },
   };
 
 function generateDungeon() {
@@ -538,10 +546,11 @@ function generateTutorialMap() {
     dungeonMap[3][3] = 'potion_heal';
     dungeonMap[4][4] = 'weapon_sword';
     dungeonMap[5][5] = 'armor_leather';
+    dungeonMap[13][13] = 'zeno_sword';
 
     // チュートリアル用の敵を配置
     let enemy = createEnemy(enemyTypes.slime, 1);
-    enemy.x = 6;
+    enemy.x = 10;
     enemy.y = 6;
     enemies.push(enemy);
     dungeonMap[enemy.y][enemy.x] = 'E';
@@ -663,14 +672,14 @@ function spawnEnemies() {
 }
 
 function spawnItems() {
-  for (let itemName in items) {
-    let item = items[itemName];
-    if (item.minLevel <= playerLevel) {
-      let spawnPoint = getRandomFloorPosition();
-      dungeonMap[spawnPoint.y][spawnPoint.x] = itemName;
+    for (let itemName in items) {
+      let item = items[itemName];
+      if (item.minLevel <= playerLevel) {
+        let spawnPoint = getRandomFloorPosition();
+        dungeonMap[spawnPoint.y][spawnPoint.x] = itemName;
+      }
     }
   }
-}
 
 function drawDungeon() {
   dungeonContainer.innerHTML = '';
@@ -690,16 +699,24 @@ function createDungeonCell(x, y) {
   const cellType = dungeonMap[y][x];
 
   switch (cellType) {
-    case '#': cell.classList.add('wall'); break;
-    case '.': cell.classList.add('floor'); break;
+    case '#': 
+        cell.classList.add('wall'); 
+        break;
+    case '.': 
+        cell.classList.add('floor'); 
+        break;
     default:
-      if (items[cellType]) {
-        cell.classList.add('item-' + items[cellType].type);
-      } else {
-        cell.classList.add('floor');
-      }
-      break;
-  }
+        if (items[cellType]) {
+            if (cellType === 'zeno_sword') {
+                cell.classList.add('floor'); // zeno_swordをfloorに分類
+            } else {
+                cell.classList.add('item-' + items[cellType].type);
+            }
+        } else {
+            cell.classList.add('floor');
+        }
+        break;
+}
 
   if (playerPosition.x === x && playerPosition.y === y) {
     cell.classList.add('player');
@@ -984,7 +1001,6 @@ function equipShoes(shoes) {
     }
     equippedShoes = shoes;
     playerEvasion += equippedShoes.evasionBonus;
-    removeItemFromInventory(shoes);
     updateHpDisplay();
     updateInventoryUI();
     displayMessage(`${shoes.name} を装備した！回避率 +${shoes.evasionBonus * 100}%`);
@@ -1079,7 +1095,7 @@ function equipShoes(shoes) {
     }
     
     function dropItem(enemy) {
-        const dropRate = 0.2;
+        const dropRate = 0.35;
     
         if (Math.random() < dropRate) {
             const possibleDrops = Object.values(items).filter(item => item.minLevel <= playerLevel);
